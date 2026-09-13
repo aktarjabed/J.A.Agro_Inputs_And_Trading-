@@ -1,11 +1,21 @@
-# INBusiness Architecture Hardening (v1.0.0-production-bundle-final)
+# INBusiness (J.A. Agro Inputs & Trading)
 
-## Core Architectural Invariants
+## Features
 
-* **BusinessContext & Repository Boundary:** All DAOs queries (read, update, delete) are business-scoped at the SQL layer. The application uses `BusinessContext` internally inside `InvoiceRepository`. The UI / ViewModels do not inject arbitrary business IDs.
-* **Idempotency & Request Fingerprint:** Every invoice creation uses an `idempotencyKey` coupled with a SHA-256 `requestFingerprint`. The fingerprint canonicalizes the seller snapshot, customer data, and all financial totals and items. Repeated network calls with the same key safely replay the invoice response, but modified payloads result in a safe rejection.
-* **Single Financial Truth:** All invoice UI logic derives totals strictly from `CalculateInvoiceTotalsUseCase`, eliminating independent tax, subtotal, and math aggregations scattered around `InvoiceViewModel`. The logic properly rounds to two decimal places at the line level.
-* **PDF Snapshot Isolation:** The PDF generator strictly consumes historical, immutable snapshots (`sellerName`, `sellerGSTIN`, `subtotal`, `taxAmount`) directly from the Room database. It does not perform internal independent mathematical calculations, nor does it reach back out to mutable `BusinessData`.
+- **Offline-First Architecture**: Completely functional without an internet connection using Room database and SQLCipher encryption.
+- **Smart Invoicing**: Generate GST-compliant invoices (CGST, SGST, IGST) with automatic calculations and supply type detection.
+- **Inventory Management**: Track product stock, monitor low-stock items, and manage product catalog.
+- **Multi-Tenant Support**: Manage multiple business profiles with isolated data scopes.
+- **PDF Generation**: Export invoices to beautifully formatted PDF documents including amount-in-words representation.
+- **Idempotent Operations**: Safe, reliable transactions preventing duplicate invoice creation.
+- **Built-in Utilities**: Integrated calculator for quick offline calculations.
 
-## Verified Tests
-- `./gradlew testDebugUnitTest` and `./gradlew assembleDebug` run smoothly without dependencies or build regressions. Note: UI Instrumentation testing execution is deferred to the cloud/emulators in GitHub CI as per guidelines.
+## App Screenshots
+
+| Splash Screen | Dashboard |
+| :---: | :---: |
+| <img src="images/splash.jpg" width="300"/> | <img src="images/dashboard.jpg" width="300"/> |
+
+| Create Invoice | Inventory |
+| :---: | :---: |
+| <img src="images/invoice.jpg" width="300"/> | <img src="images/inventory.jpg" width="300"/> |
