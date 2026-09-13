@@ -217,6 +217,10 @@ class InvoiceRepository @Inject constructor(
              // 5. Concurrency fallback for Idempotency (Slow path - unique constraint collision)
              // Transaction has rolled back by now
              Log.e(TAG, "Idempotency constraint conflict", e)
+             val msg = e.message ?: ""
+             if (!msg.contains("idempotencyKey", ignoreCase = true) && !msg.contains("index_invoices_businessId_idempotencyKey", ignoreCase = true)) {
+                 return@withContext InvoiceCreationResult.UnexpectedFailure(e)
+             }
              if (idempotencyKey != null) {
                  val existing = invoiceDao.getInvoiceByIdempotencyKey(idempotencyKey, businessId)
                  if (existing != null) {

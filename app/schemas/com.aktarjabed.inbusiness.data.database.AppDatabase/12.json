@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 12,
-    "identityHash": "03eeda6c81254486c33f66e2340d7f2e",
+    "identityHash": "971aab3c88d3fb29d89007fc02607506",
     "entities": [
       {
         "tableName": "business_data",
@@ -729,7 +729,7 @@
       },
       {
         "tableName": "products",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `businessId` TEXT NOT NULL, `name` TEXT NOT NULL COLLATE NOCASE, `brand` TEXT NOT NULL COLLATE NOCASE, `category` TEXT NOT NULL COLLATE NOCASE, `unitType` TEXT NOT NULL COLLATE NOCASE, `pricePerUnit` REAL NOT NULL, `availableStock` REAL NOT NULL, `batchNumber` TEXT NOT NULL, `isWholesaleOnly` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `businessId` TEXT NOT NULL, `name` TEXT NOT NULL COLLATE NOCASE, `brand` TEXT NOT NULL COLLATE NOCASE, `category` TEXT NOT NULL COLLATE NOCASE, `unitType` TEXT NOT NULL COLLATE NOCASE, `pricePerUnit` REAL NOT NULL, `availableStock` REAL NOT NULL, `batchNumber` TEXT NOT NULL, `isWholesaleOnly` INTEGER NOT NULL, `gstPercentage` REAL NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -790,6 +790,12 @@
             "columnName": "isWholesaleOnly",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "gstPercentage",
+            "columnName": "gstPercentage",
+            "affinity": "REAL",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -818,7 +824,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '03eeda6c81254486c33f66e2340d7f2e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '971aab3c88d3fb29d89007fc02607506')"
     ]
   }
 }

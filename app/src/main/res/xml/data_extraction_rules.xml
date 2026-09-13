@@ -2,8 +2,8 @@
 <data-extraction-rules>
     <cloud-network>
         <exclude domain="sharedpref" path="inbusiness_secure_prefs.xml" />
-        <exclude domain="database" path="inbusiness.db" />
-        <exclude domain="database" path="inbusiness.db-wal" />
-        <exclude domain="database" path="inbusiness.db-shm" />
+        <exclude domain="database" path="inbusiness_ultra.db" />
+        <exclude domain="database" path="inbusiness_ultra.db-wal" />
+        <exclude domain="database" path="inbusiness_ultra.db-shm" />
     </cloud-network>
 </data-extraction-rules>
