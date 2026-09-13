@@ -37,12 +37,25 @@ fun InvoiceScreen(
     val items by viewModel.invoiceItems.collectAsState()
     val calculationResult by viewModel.calculationResult.collectAsState()
     val productSuggestions by viewModel.productSuggestions.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     var showAddItemDialog by remember { mutableStateOf(false) }
     var editingItemInput by remember { mutableStateOf<InvoiceItemInput?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         viewModel.checkQuotaAndPrepare()
+    }
+
+    // Show Snackbar when a calculation error occurs
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { msg ->
+            snackbarHostState.showSnackbar(
+                message = msg,
+                duration = SnackbarDuration.Short
+            )
+            viewModel.clearError()
+        }
     }
 
     LaunchedEffect(uiState) {
@@ -65,6 +78,7 @@ fun InvoiceScreen(
                 }
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             if (uiState is InvoiceUiState.CreateAllowed) {
                 FloatingActionButton(onClick = { editingItemInput = null

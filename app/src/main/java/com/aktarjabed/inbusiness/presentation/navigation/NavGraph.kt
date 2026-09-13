@@ -18,72 +18,72 @@ import com.aktarjabed.inbusiness.presentation.screens.SetupScreen
 @Composable
 fun InBusinessNavGraph() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "splash") {
-        composable("splash") {
+    NavHost(navController = navController, startDestination = NavigationRoutes.SPLASH) {
+        composable(NavigationRoutes.SPLASH) {
             SplashScreen(
                 onNavigateToDashboard = {
-                    navController.navigate("dashboard") {
-                        popUpTo("splash") { inclusive = true }
+                    navController.navigate(NavigationRoutes.DASHBOARD) {
+                        popUpTo(NavigationRoutes.SPLASH) { inclusive = true }
                     }
                 },
                 onNavigateToSetup = {
-                    navController.navigate("setup") {
-                        popUpTo("splash") { inclusive = true }
+                    navController.navigate(NavigationRoutes.SETUP) {
+                        popUpTo(NavigationRoutes.SPLASH) { inclusive = true }
                     }
                 }
             )
         }
-        composable("setup") {
+        composable(NavigationRoutes.SETUP) {
             SetupScreen(
                 onSetupComplete = {
-                    navController.navigate("dashboard") {
-                        popUpTo("setup") { inclusive = true }
+                    navController.navigate(NavigationRoutes.DASHBOARD) {
+                        popUpTo(NavigationRoutes.SETUP) { inclusive = true }
                     }
                 }
             )
         }
-        composable("dashboard") {
+        composable(NavigationRoutes.DASHBOARD) {
             DashboardScreen(
-                onNavigateToCalculator = { navController.navigate("calculator") },
-                onNavigateToInvoice = { navController.navigate("invoice") },
-                onNavigateToInventory = { navController.navigate("inventory") }
+                onNavigateToCalculator = { navController.navigate(NavigationRoutes.CALCULATOR) },
+                onNavigateToInvoice = { navController.navigate(NavigationRoutes.INVOICE) },
+                onNavigateToInventory = { navController.navigate(NavigationRoutes.INVENTORY) }
             )
         }
-        composable("calculator") {
+        composable(NavigationRoutes.CALCULATOR) {
             CalculatorScreen()
         }
-        composable("invoice") {
+        composable(NavigationRoutes.INVOICE) {
             InvoiceScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToUpgrade = { /* TODO: Navigate to upgrade screen */ },
                 onNavigateToPreview = { invoiceId ->
                     navController.popBackStack()
-                    navController.navigate("invoice-preview/$invoiceId")
+                    navController.navigate(NavigationRoutes.invoicePreview(invoiceId))
                 }
             )
         }
         composable(
-            route = "invoice-preview/{invoiceId}",
+            route = NavigationRoutes.INVOICE_PREVIEW,
             arguments = listOf(navArgument("invoiceId") { type = NavType.StringType })
         ) {
             InvoicePreviewScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-        composable("inventory") {
+        composable(NavigationRoutes.INVENTORY) {
             InventoryListScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToAddProduct = { navController.navigate("addProduct") },
-                onNavigateToEditProduct = { productId -> navController.navigate("editProduct/$productId") }
+                onNavigateToAddProduct = { navController.navigate(NavigationRoutes.ADD_PRODUCT) },
+                onNavigateToEditProduct = { productId -> navController.navigate(NavigationRoutes.editProduct(productId)) }
             )
         }
-        composable("addProduct") {
+        composable(NavigationRoutes.ADD_PRODUCT) {
             ProductEntryScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
         composable(
-            route = "editProduct/{productId}",
+            route = NavigationRoutes.EDIT_PRODUCT,
             arguments = listOf(navArgument("productId") { type = NavType.LongType })
         ) { backStackEntry ->
             val productId = backStackEntry.arguments?.getLong("productId")

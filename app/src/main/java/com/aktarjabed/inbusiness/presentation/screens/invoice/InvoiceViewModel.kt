@@ -66,7 +66,9 @@ class InvoiceViewModel @Inject constructor(
     val amountPaid = MutableStateFlow(0.0)
     val paymentMethod = MutableStateFlow("NONE")
 
-
+    // Error message for surfacing calculation errors to the UI
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
     private var currentIdempotencyKey: String? = null
 
@@ -191,7 +193,6 @@ class InvoiceViewModel @Inject constructor(
         val currentSupplyType = supplyType.value
         if (currentSupplyType == SupplyType.UNKNOWN) {
             _calculationResult.value = null
-
             return
         }
 
@@ -223,15 +224,16 @@ class InvoiceViewModel @Inject constructor(
                     amountPaid = amountPaid.value
                 )
                 _calculationResult.value = calcResult
-
+                _errorMessage.value = null
             } else {
                 _calculationResult.value = null
-
+                _errorMessage.value = null
             }
         } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException) throw e
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            Log.e(TAG, "Calculation error", e)
             _calculationResult.value = null
-
+            _errorMessage.value = e.message ?: "Calculation failed"
         }
     }
 
@@ -321,6 +323,10 @@ class InvoiceViewModel @Inject constructor(
 
     fun resetState() {
         _uiState.value = InvoiceUiState.Initial
+    }
+
+    fun clearError() {
+        _errorMessage.value = null
     }
 
     fun resetIdempotencyKey() {
