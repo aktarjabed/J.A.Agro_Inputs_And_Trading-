@@ -30,3 +30,10 @@
     public static **[] values();
     public static ** valueOf(java.lang.String);
 }-dontwarn com.google.errorprone.annotations.**
+# SQLCipher rules
+-keep class net.sqlcipher.** { *; }
+-keep class net.sqlcipher.database.** { *; }
+-keep class org.sqlite.database.** { *; }
+
+# WorkManager
+-keep class androidx.work.** { *; }
