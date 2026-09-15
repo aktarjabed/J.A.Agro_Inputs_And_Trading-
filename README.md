@@ -1,57 +1,43 @@
-# J.A. Agro Inputs & Trading
+# INBusiness - Agro Inputs Invoicing & Financial Management
 
-An offline-first Android application designed to manage billing, inventory, and analytics for agricultural input trading securely and reliably on local devices.
+INBusiness is an offline-first Android application designed specifically for **J.A. Agro Inputs & Trading**. It provides a robust, encrypted, transactional framework for generating invoices, tracking stock, receiving payments, and managing customer ledgers. It supports standard accounting invariants and complies with regional tax/GST formatting without live IRP integration.
 
-## Features
+## Current Production Capabilities
 
-### Core Billing
-- **Invoice Creation**: Supports creating comprehensive `TAX INVOICE` and `BILL OF SUPPLY` documents.
-- **GST Calculation**: Accurate intra-state and inter-state GST computations, maintaining explicit separation for CGST, SGST, and IGST.
-- **GST Compliance Fields**: Supports configuring Place of Supply, Reverse Charge indicators, HSN/SAC codes, and UQC (Unit Quantity Codes).
+- **Offline-First:** All data operations are local, powered by Room SQLite.
+- **Security:** Entire database is fully encrypted with **SQLCipher** for Android. Keys are managed by Android Keystore. The database is strictly excluded from Android cloud backups for structural safety.
+- **Data Isolation:** Fully scoped architecture supporting multiple businesses internally. Transactions strictly validate the `businessId`.
 
-### Invoice Integrity
-- **Immutable Snapshots**: Invoice historical snapshots preserve the exact state at creation. Subsequent edits to products or customers will not distort historical records.
-- **Idempotency & Concurrency**: Highly concurrent, robust Room SQLite transactions with fingerprint-based idempotency mechanisms to prevent duplicate bill generation.
-- **Invoice Lifecycle**: Invoices support atomic cancellation and explicit state transitions (`COMPLETED` to `CANCELLED`).
+## Implemented Modules
 
-### Customer & Ledger Management
-- **Customer Master Database**: Integrated directory to store customer details and GSTIN securely.
-- **Payment Ledger**: Track partial payments, full payments, and cumulative balance dues for specific invoices sequentially. Reject overpayments and invalid monetary states automatically.
+### Transactional Ledger (Phase 3 & 4)
+- **Invoice Lifecycle:** Explicit `status` tracking (e.g., `COMPLETED`, `CANCELLED`). Support for `TAX_INVOICE`, `BILL_OF_SUPPLY`. Atomic transactional creation.
+- **Stock Movements:** Every inventory update enforces double-entry rules. Support for `SALE`, `SALE_REVERSAL`, etc. Editing products does not bypass movements.
+- **Payment Invariants:** `amountPaid` and `balanceDue` strictly track multiple ledger payments (`amountPaid == SUM(valid Payment.amount)`).
+- **Cancellation:** Invoices can be cancelled exactly once, producing deterministic `SALE_REVERSAL` records.
+- **Idempotency:** Replaying an identical invoice creation request generates no new Side Effects.
 
-### Inventory Tracking
-- **Product Catalog**: Maintain active/inactive products, individual UQC/HSN configurations, and dynamic pricing.
-- **Transactional Deductions**: Atomic stock decrement directly linked to invoice completion.
-- **Audit Trails**: Every inventory change automatically generates a verifiable `StockMovement` (e.g., `SALE`, `SALE_REVERSAL`) retaining `stockBefore` and `stockAfter` invariants.
+### Dashboard & Analytics (Phase 5)
+- **SQL-Backed:** In-database aggregation to prevent N+1 and unbounded memory allocations.
+- **Timezone Aware:** Relies on the `Asia/Kolkata` timezone internally for accurate day/month/rollover limits. Interval handling uses safe `[start, end)` SQL queries.
+- **7-Day Chart:** Always shows exactly the last 7 calendar days, zero-filling empty spots deterministically.
+- **Insights:** Total Revenue, Today's Revenue, Pending Dues, Active Products, Low Stock.
 
-### Analytics Dashboard
-- Aggregated insights populated natively via pure-SQL Room `Flow` queries (bypassing heavy memory loads).
-- Immediate visibility on **Total Revenue**, **Today's Revenue**, **Pending Dues**, active product count, and low-stock alerts.
-- Visual **7-Day Revenue** historical chart using deterministic, zero-filled aggregations.
+### Immutable PDF Generation (Phase 6)
+- **Truth at Transaction Time:** PDFs are generated based strictly on immutable snapshots recorded at the time of invoice creation (prices, GST, items, HSN/SAC, UQC, seller/buyer details).
+- **Semantically Accurate:** Cumulative payment fields accurately reflect `TOTAL AMOUNT PAID` rather than incorrectly claiming payments were received "today".
+- *Note:* No live IRP, E-Invoice, or dynamic QR generation is claimed.
 
-### Reporting & Filtering
-- Filter, search, and sort invoices dynamically by number, date range, payment status (`PAID`, `PARTIAL`, `DUE`), document type, or cancellation status.
-- Export highly-detailed PDF invoices featuring Indian rupee text-conversion ("Amount in Words"), GST breakdown, itemization, and accurate seller identity headers.
+## Technical Architecture
 
-## Architecture
+- **API Level:** Targets Android API 36 / SDK 36.
+- **Tooling:** Kotlin 1.9+, Android Gradle Plugin 8.6.0.
+- **UI:** 100% Jetpack Compose.
+- **DI:** Hilt.
+- **Concurrency:** Kotlin Coroutines & Flow.
 
-- **100% Offline-First**: Built natively for Android using Jetpack Compose, Kotlin Coroutines, and Hilt Dependency Injection without needing cloud servers.
-- **API 36 Ready**: Verified to compile and run against modern Android environments, incorporating `16-KB page-size` compatibility for native libraries.
+## Missing / Future Implementation
 
-## Data & Security
-
-- **Encrypted Local Storage**: Leveraging `SQLCipher` to completely encrypt the Room database and protect sensitive business trading information at rest on the mobile device.
-- **Tenant Isolation**: Deep multi-business encapsulation ensures multiple profiles can operate entirely separately, guaranteed by rigorous `businessId` checks in every DAO database query.
-- **Automated Quota Governance**: Track feature utilization via `QuotaGate`, restricting operations based on tiered device quotas.
-
-## Testing & Project Status
-
-- JVM Unit Tests, Linting, and native Release compilation (`assembleRelease`) are fully verified locally.
-- Core financial source-of-truth invariants and migrations (`version 13` through `version 18`) maintain dedicated architectural tests.
-- UI/Database Instrumentation (`connectedDebugAndroidTest`) is tested primarily via automated API 36 CI Emulators to guarantee thread-safe runtime safety in a controlled environment.
-
-*(Note: Live government e-Invoice integration/IRN generation is not currently active. E-Invoice metadata fields exist only for manual reference and future expansion.)*
-
-## Screenshots
-
-*Actual runtime application screenshots will be populated natively from CI emulator automation in subsequent releases.*
+- **Data Backup / Restore:** Currently excluded from automatic backup. A custom, manual secure export feature is required for business continuity.
+- **E-Invoice API:** Nullable placeholders exist in the schema, but live submission is disabled.
 

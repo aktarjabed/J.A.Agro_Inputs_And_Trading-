@@ -15,16 +15,16 @@ class PaymentRepository @Inject constructor(
     private val businessContext: BusinessContext
 ) {
     fun getPaymentsForInvoice(invoiceId: String): Flow<List<Payment>> = businessContext.activeBusinessId.flatMapLatest { businessId ->
-        paymentDao.getPaymentsForInvoice(businessId, invoiceId)
+        paymentDao.getPaymentsForInvoice(businessId.toLong(), invoiceId)
     }
 
     suspend fun getTotalPaidForInvoice(invoiceId: String): Double {
         val businessId = businessContext.activeBusinessId.first()
-        return paymentDao.getTotalPaidForInvoice(businessId, invoiceId) ?: 0.0
+        return paymentDao.getTotalPaidForInvoice(businessId.toLong(), invoiceId) ?: 0.0
     }
 
     suspend fun addPayment(payment: Payment): Long {
-        require(payment.businessId == businessContext.activeBusinessId.first()) { "Payment must belong to active business" }
+        require(payment.businessId == businessContext.activeBusinessId.first().toLong()) { "Payment must belong to active business" }
         return paymentDao.insertPayment(payment)
     }
 }
