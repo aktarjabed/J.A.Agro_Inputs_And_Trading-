@@ -51,15 +51,17 @@ interface InvoiceDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertItem(item: InvoiceItem)
 
-
-
-
+    @Update
+    suspend fun updateInvoice(invoice: Invoice)
 
     @Query("SELECT * FROM invoices WHERE businessId = :businessId AND (invoiceNumber LIKE '%' || :query || '%' OR customerName LIKE '%' || :query || '%')")
     fun searchInvoices(businessId: String, query: String): Flow<List<Invoice>>
 
     @Query("SELECT * FROM invoices WHERE businessId = :businessId ORDER BY createdAt DESC LIMIT :limit")
     suspend fun getRecentInvoicesByBusiness(businessId: String, limit: Int): List<Invoice>
+
+    @RawQuery
+    suspend fun getInvoicesByQuery(query: androidx.sqlite.db.SupportSQLiteQuery): List<Invoice>
 
     @Query("SELECT * FROM invoice_sequence WHERE businessId = :businessId LIMIT 1")
     suspend fun getInvoiceSequence(businessId: String): InvoiceSequence?
