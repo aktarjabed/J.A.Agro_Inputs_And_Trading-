@@ -61,9 +61,13 @@ class InvoiceConcurrencyTest {
         businessDao = db.businessDao()
         productDao = db.productDao()
 
-        mockBusinessContext = mock(BusinessContext::class.java)
-        `when`(mockBusinessContext.activeBusinessId).thenReturn(flowOf(BIZ_ID))
-        `when`(mockBusinessContext.currentUserId).thenReturn(flowOf(USER_ID))
+        mockBusinessContext = BusinessContext(ApplicationProvider.getApplicationContext())
+        runBlocking {
+            mockBusinessContext.setActiveBusinessId(BIZ_ID)
+            mockBusinessContext.setUserId(USER_ID)
+        }
+
+
 
         mockQuotaGate = mock(QuotaGate::class.java)
 

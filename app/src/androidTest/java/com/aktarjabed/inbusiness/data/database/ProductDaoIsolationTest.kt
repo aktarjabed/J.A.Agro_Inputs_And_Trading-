@@ -56,7 +56,7 @@ class ProductDaoIsolationTest {
     @Test
     fun testAtomicStockDeductionSuccess() = runBlocking {
         val productId = productDao.insertProduct(
-            Product(businessId = "1L", name = "Prod 1", brand = "B", category = "C", unitType = "U", pricePerUnit = 10.0, availableStock = 50.0)
+            Product(businessId = "biz-1", name = "Prod 1", brand = "B", category = "C", unitType = "U", pricePerUnit = 10.0, availableStock = 50.0)
         )
 
         val affectedRows = productDao.deductStock(productId, "biz-1", 10.0)
@@ -64,13 +64,13 @@ class ProductDaoIsolationTest {
 
         val updatedProduct = productDao.getProductById(productId, "biz-1")
         assertNotNull(updatedProduct)
-        assertEquals(40.0, updatedProduct!!.availableStock)
+        assertEquals(40.0, updatedProduct!!.availableStock, 0.001)
     }
 
     @Test
     fun testAtomicStockDeductionFailsOnInsufficientStock() = runBlocking {
         val productId = productDao.insertProduct(
-            Product(businessId = "1L", name = "Prod 1", brand = "B", category = "C", unitType = "U", pricePerUnit = 10.0, availableStock = 5.0)
+            Product(businessId = "biz-1", name = "Prod 1", brand = "B", category = "C", unitType = "U", pricePerUnit = 10.0, availableStock = 5.0)
         )
 
         val affectedRows = productDao.deductStock(productId, "biz-1", 10.0)
@@ -78,13 +78,13 @@ class ProductDaoIsolationTest {
 
         val updatedProduct = productDao.getProductById(productId, "biz-1")
         assertNotNull(updatedProduct)
-        assertEquals(5.0, updatedProduct!!.availableStock) // Unchanged
+        assertEquals(5.0, updatedProduct!!.availableStock, 0.001) // Unchanged
     }
 
     @Test
     fun testAtomicStockDeductionFailsOnWrongBusinessId() = runBlocking {
         val productId = productDao.insertProduct(
-            Product(businessId = "1L", name = "Prod 1", brand = "B", category = "C", unitType = "U", pricePerUnit = 10.0, availableStock = 50.0)
+            Product(businessId = "biz-1", name = "Prod 1", brand = "B", category = "C", unitType = "U", pricePerUnit = 10.0, availableStock = 50.0)
         )
 
         val affectedRows = productDao.deductStock(productId, "biz-2", 10.0)
@@ -92,18 +92,18 @@ class ProductDaoIsolationTest {
 
         val updatedProduct = productDao.getProductById(productId, "biz-1")
         assertNotNull(updatedProduct)
-        assertEquals(50.0, updatedProduct!!.availableStock) // Unchanged
+        assertEquals(50.0, updatedProduct!!.availableStock, 0.001) // Unchanged
     }
 
     @Test
     fun testCrossBusinessUpdateFails() = runBlocking {
         val productId = productDao.insertProduct(
-            Product(businessId = "1L", name = "Original", brand = "B", category = "C", unitType = "U", pricePerUnit = 10.0, availableStock = 50.0)
+            Product(businessId = "biz-1", name = "Original", brand = "B", category = "C", unitType = "U", pricePerUnit = 10.0, availableStock = 50.0)
         )
 
         val affectedRows = productDao.updateProduct(
             id = productId,
-            businessId = "2L", // Wrong business ID
+            businessId = "biz-2", // Wrong business ID
             name = "Hacked",
             brand = "B", category = "C", unitType = "U", pricePerUnit = 10.0, availableStock = 50.0, batchNumber = "", isWholesaleOnly = false, gstPercentage = 0.0
         )
@@ -118,7 +118,7 @@ class ProductDaoIsolationTest {
     @Test
     fun testCrossBusinessDeleteFails() = runBlocking {
         val productId = productDao.insertProduct(
-            Product(businessId = "1L", name = "Original", brand = "B", category = "C", unitType = "U", pricePerUnit = 10.0, availableStock = 50.0)
+            Product(businessId = "biz-1", name = "Original", brand = "B", category = "C", unitType = "U", pricePerUnit = 10.0, availableStock = 50.0)
         )
 
         val affectedRows = productDao.deleteProduct(productId, "biz-2") // Wrong business ID
