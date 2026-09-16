@@ -17,7 +17,8 @@ class DatabaseMigrationTest {
     @get:Rule
     val helper: MigrationTestHelper = MigrationTestHelper(
         InstrumentationRegistry.getInstrumentation(),
-        AppDatabase::class.java.canonicalName,
+        AppDatabase::class.java,
+        emptyList(),
         FrameworkSQLiteOpenHelperFactory()
     )
 
@@ -29,8 +30,8 @@ class DatabaseMigrationTest {
 
         // Insert some data in older schema
         db.execSQL("""
-            INSERT INTO invoices (id, businessId, invoiceNumber, subtotal, totalAmount, taxAmount, amountPaid, balanceDue, paymentMethod, createdAt, updatedAt)
-            VALUES ('inv-1', 'biz-1', 'INV-0001', 100.0, 118.0, 18.0, 0.0, 118.0, 'NONE', 1000000, 1000000)
+            INSERT INTO invoices (id, businessId, invoiceNumber, subtotal, totalAmount, taxAmount, amountPaid, balanceDue, paymentMethod, createdAt, updatedAt, sellerName, sellerAddress, sellerPhone, customerName, customerAddress, customerPhone, idempotencyKey)
+            VALUES ('inv-1', 'biz-1', 'INV-0001', 100.0, 118.0, 18.0, 0.0, 118.0, 'NONE', 1000000, 1000000, 'Seller', 'Address', '123', 'Cust', 'Address', '456', 'idem1')
         """)
         db.execSQL("""
             INSERT INTO products (businessId, name, brand, category, unitType, pricePerUnit, availableStock, isWholesaleOnly, gstPercentage)

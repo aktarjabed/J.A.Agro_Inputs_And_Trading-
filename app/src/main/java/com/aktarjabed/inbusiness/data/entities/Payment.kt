@@ -1,32 +1,36 @@
 package com.aktarjabed.inbusiness.data.entities
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
 import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
+import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "payments",
     indices = [
         Index(value = ["businessId"]),
         Index(value = ["invoiceId"])
+    ],
+    foreignKeys = [
+        ForeignKey(
+            entity = Invoice::class,
+            parentColumns = ["id"],
+            childColumns = ["invoiceId"],
+            onDelete = ForeignKey.RESTRICT
+        )
     ]
 )
 data class Payment(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     @ColumnInfo(name = "businessId")
-    val businessId: String,
+    val businessId: Long,
     @ColumnInfo(name = "invoiceId")
     val invoiceId: String,
-    @ColumnInfo(name = "amount")
     val amount: Double,
-    @ColumnInfo(name = "paymentMethod")
-    val paymentMethod: String,
-    @ColumnInfo(name = "paymentDate")
+    val paymentMode: String = "CASH",
     val paymentDate: Long = System.currentTimeMillis(),
-    @ColumnInfo(name = "referenceId")
-    val referenceId: String = "",
-    @ColumnInfo(name = "notes")
-    val notes: String = ""
+    val referenceNumber: String = "",
+    val status: String = "SUCCESS"
 )

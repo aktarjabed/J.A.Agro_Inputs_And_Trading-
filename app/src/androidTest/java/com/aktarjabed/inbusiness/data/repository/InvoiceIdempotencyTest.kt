@@ -53,7 +53,7 @@ class InvoiceIdempotencyTest {
         quotaGate = QuotaGate(db.userQuotaDao(), classifier, clock, context)
 
         repo = InvoiceRepository(
-            db, db.invoiceDao(), db.productDao(), db.businessDao(),
+            db, db.invoiceDao(), db.paymentDao(), db.stockMovementDao(), db.productDao(), db.businessDao(),
             CalculateInvoiceTotalsUseCase(), quotaGate, businessContext
         )
     }

@@ -35,5 +35,13 @@ data class Product(
     val availableStock: Double,
     val batchNumber: String = "",
     val isWholesaleOnly: Boolean = false,
-    val gstPercentage: Double = 0.0
+    val gstPercentage: Double = 0.0,
+    @androidx.room.ColumnInfo(defaultValue = "1")
+    val isActive: Boolean = true,
+    @androidx.room.ColumnInfo(defaultValue = "0.0")
+    val reorderThreshold: Double = 0.0,
+    @androidx.room.ColumnInfo(defaultValue = "")
+    val hsnSac: String = "",
+    @androidx.room.ColumnInfo(defaultValue = "")
+    val uqc: String = ""
 )

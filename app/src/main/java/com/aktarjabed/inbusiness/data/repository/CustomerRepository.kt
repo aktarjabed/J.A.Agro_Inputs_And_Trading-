@@ -15,25 +15,25 @@ class CustomerRepository @Inject constructor(
     private val businessContext: BusinessContext
 ) {
     fun getAllCustomers(): Flow<List<Customer>> = businessContext.activeBusinessId.flatMapLatest { businessId ->
-        customerDao.getAllCustomers(businessId)
+        customerDao.getAllCustomers(businessId.toLong())
     }
 
     fun searchCustomers(query: String): Flow<List<Customer>> = businessContext.activeBusinessId.flatMapLatest { businessId ->
-        customerDao.searchCustomers(businessId, query)
+        customerDao.searchCustomers(businessId.toLong(), query)
     }
 
     suspend fun getCustomerByName(name: String): Customer? {
         val businessId = businessContext.activeBusinessId.first()
-        return customerDao.getCustomerByName(businessId, name)
+        return customerDao.getCustomerByName(businessId.toLong(), name)
     }
 
     suspend fun getCustomerById(id: Long): Customer? {
         val businessId = businessContext.activeBusinessId.first()
-        return customerDao.getCustomerById(businessId, id)
+        return customerDao.getCustomerById(businessId.toLong(), id)
     }
 
     suspend fun saveCustomer(customer: Customer): Long {
-        require(customer.businessId == businessContext.activeBusinessId.first()) { "Customer must belong to active business" }
+        require(customer.businessId == businessContext.activeBusinessId.first().toLong()) { "Customer must belong to active business" }
         return if (customer.id == 0L) {
             customerDao.insertCustomer(customer)
         } else {

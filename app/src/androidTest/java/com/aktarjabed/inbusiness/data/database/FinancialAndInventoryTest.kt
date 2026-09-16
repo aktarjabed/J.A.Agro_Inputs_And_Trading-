@@ -42,7 +42,7 @@ class FinancialAndInventoryTest {
 
     @Test
     fun testPaymentInsertionUpdatesInvoiceBalance() = runBlocking {
-        val bizId = "biz-1"
+        val bizId = "1"
         val invId = "inv-1"
 
         // Setup initial invoice
@@ -58,15 +58,15 @@ class FinancialAndInventoryTest {
 
         // Add partial payment
         val payment1 = Payment(
-            businessId = bizId,
+            businessId = bizId.toLong(),
             invoiceId = invId,
             amount = 300.0,
-            paymentMethod = "CASH"
+            // paymentMethod = "CASH"
         )
         paymentDao.insertPayment(payment1)
 
         // Manually update invoice to simulate PaymentUseCases transaction for test
-        val currentTotalPaid = paymentDao.getTotalPaidForInvoice(bizId, invId) ?: 0.0
+        val currentTotalPaid = paymentDao.getTotalPaidForInvoice(bizId.toLong(), invId) ?: 0.0
         invoiceDao.updateInvoice(invoice.copy(amountPaid = currentTotalPaid, balanceDue = invoice.totalAmount - currentTotalPaid))
 
         var updatedInvoice = invoiceDao.getInvoiceById(invId, bizId)
@@ -76,14 +76,14 @@ class FinancialAndInventoryTest {
 
         // Add another payment
         val payment2 = Payment(
-            businessId = bizId,
+            businessId = bizId.toLong(),
             invoiceId = invId,
             amount = 700.0,
-            paymentMethod = "UPI"
+            // paymentMethod = "UPI"
         )
         paymentDao.insertPayment(payment2)
 
-        val newTotalPaid = paymentDao.getTotalPaidForInvoice(bizId, invId) ?: 0.0
+        val newTotalPaid = paymentDao.getTotalPaidForInvoice(bizId.toLong(), invId) ?: 0.0
         invoiceDao.updateInvoice(invoice.copy(amountPaid = newTotalPaid, balanceDue = invoice.totalAmount - newTotalPaid))
 
         updatedInvoice = invoiceDao.getInvoiceById(invId, bizId)
@@ -93,7 +93,7 @@ class FinancialAndInventoryTest {
 
     @Test
     fun testStockMovementOnSaleAndCancellation() = runBlocking {
-        val bizId = "biz-1"
+        val bizId = "1"
         val productId = 1L
         val invId = "inv-1"
 
@@ -115,7 +115,7 @@ class FinancialAndInventoryTest {
         productDao.deductStock(productId, bizId, qtySold)
 
         val moveSale = StockMovement(
-            businessId = bizId,
+            businessId = bizId.toLong(),
             productId = productId,
             movementType = "SALE",
             quantity = qtySold,
@@ -132,7 +132,7 @@ class FinancialAndInventoryTest {
         // 2. Simulate Cancellation Reversal
         productDao.addStock(productId, bizId, qtySold)
         val moveReversal = StockMovement(
-            businessId = bizId,
+            businessId = bizId.toLong(),
             productId = productId,
             movementType = "SALE_REVERSAL",
             quantity = qtySold,
@@ -146,7 +146,7 @@ class FinancialAndInventoryTest {
         val productAfterReversal = productDao.getProductById(productId, bizId)
         assertEquals(50.0, productAfterReversal!!.availableStock, 0.001)
 
-        val movements = stockMovementDao.getMovementsByReference(bizId, "INVOICE", invId)
+        val movements = stockMovementDao.getMovementsByReference(bizId.toLong(), "INVOICE", invId)
         assertEquals(2, movements.size)
         assertEquals("SALE", movements[0].movementType)
         assertEquals("SALE_REVERSAL", movements[1].movementType)
