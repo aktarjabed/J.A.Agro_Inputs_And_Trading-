@@ -64,7 +64,7 @@ class ProductDaoIsolationTest {
 
         val updatedProduct = productDao.getProductById(productId, "biz-1")
         assertNotNull(updatedProduct)
-        assertEquals(40.0, updatedProduct!!.availableStock)
+        assertEquals(40.0, updatedProduct!!.availableStock, 0.001)
     }
 
     @Test
@@ -78,7 +78,7 @@ class ProductDaoIsolationTest {
 
         val updatedProduct = productDao.getProductById(productId, "biz-1")
         assertNotNull(updatedProduct)
-        assertEquals(5.0, updatedProduct!!.availableStock) // Unchanged
+        assertEquals(5.0, updatedProduct!!.availableStock, 0.001) // Unchanged
     }
 
     @Test
@@ -92,7 +92,7 @@ class ProductDaoIsolationTest {
 
         val updatedProduct = productDao.getProductById(productId, "biz-1")
         assertNotNull(updatedProduct)
-        assertEquals(50.0, updatedProduct!!.availableStock) // Unchanged
+        assertEquals(50.0, updatedProduct!!.availableStock, 0.001) // Unchanged
     }
 
     @Test

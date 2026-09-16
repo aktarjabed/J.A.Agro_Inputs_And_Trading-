@@ -41,5 +41,9 @@ data class Invoice(
     val irn: String? = null,
     val ackNo: String? = null,
     val ackDate: Instant? = null,
-    val qrCodeData: String? = null
+    val qrCodeData: String? = null,
+    @androidx.room.ColumnInfo(defaultValue = "COMPLETED")
+    val status: String = "COMPLETED",
+    @androidx.room.ColumnInfo(defaultValue = "TAX_INVOICE")
+    val documentType: String = "TAX_INVOICE"
 )

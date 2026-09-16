@@ -22,9 +22,12 @@ import net.sqlcipher.database.SupportFactory
         CalculationResult::class,
         UserQuotaEntity::class,
         InvoiceSequence::class,
-        Product::class
+        Product::class,
+        Customer::class,
+        Payment::class,
+        StockMovement::class
     ],
-    version = 13,
+    version = 18,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -34,6 +37,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun invoiceDao(): InvoiceDao
     abstract fun userQuotaDao(): UserQuotaDao
     abstract fun productDao(): ProductDao
+    abstract fun customerDao(): CustomerDao
+    abstract fun paymentDao(): PaymentDao
+    abstract fun stockMovementDao(): StockMovementDao
+    abstract fun dashboardDao(): DashboardDao
 
     companion object {
         private const val DATABASE_NAME = "inbusiness_ultra.db"
@@ -199,6 +206,47 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `customers` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `businessId` INTEGER NOT NULL, `name` TEXT NOT NULL, `address` TEXT NOT NULL DEFAULT '', `gstin` TEXT NOT NULL DEFAULT '', `phone` TEXT NOT NULL DEFAULT '', `isActive` INTEGER NOT NULL DEFAULT 1, FOREIGN KEY(`businessId`) REFERENCES `business_data`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_customers_businessId_name` ON `customers` (`businessId`, `name`)")
+            }
+        }
+
+        val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `payments` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `businessId` INTEGER NOT NULL, `invoiceId` TEXT NOT NULL, `amount` REAL NOT NULL, `paymentMode` TEXT NOT NULL DEFAULT 'CASH', `paymentDate` INTEGER NOT NULL, `referenceNumber` TEXT NOT NULL DEFAULT '', `status` TEXT NOT NULL DEFAULT 'SUCCESS', FOREIGN KEY(`invoiceId`) REFERENCES `invoices`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_payments_businessId` ON `payments` (`businessId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_payments_invoiceId` ON `payments` (`invoiceId`)")
+            }
+        }
+
+        val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `stock_movements` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `businessId` INTEGER NOT NULL, `productId` INTEGER NOT NULL, `movementType` TEXT NOT NULL, `quantity` REAL NOT NULL, `stockBefore` REAL NOT NULL, `stockAfter` REAL NOT NULL, `referenceType` TEXT NOT NULL, `referenceId` TEXT NOT NULL, `reason` TEXT NOT NULL DEFAULT '', `createdAt` INTEGER NOT NULL, FOREIGN KEY(`productId`) REFERENCES `products`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_stock_movements_businessId` ON `stock_movements` (`businessId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_stock_movements_productId` ON `stock_movements` (`productId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_stock_movements_referenceId` ON `stock_movements` (`referenceId`)")
+            }
+        }
+
+        val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE invoices ADD COLUMN status TEXT NOT NULL DEFAULT 'COMPLETED'")
+                db.execSQL("ALTER TABLE invoices ADD COLUMN documentType TEXT NOT NULL DEFAULT 'TAX_INVOICE'")
+            }
+        }
+
+        val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE products ADD COLUMN isActive INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE products ADD COLUMN reorderThreshold REAL NOT NULL DEFAULT 0.0")
+                db.execSQL("ALTER TABLE products ADD COLUMN hsnSac TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE products ADD COLUMN uqc TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
+
         val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // Ensure foreign keys are turned off during migration
@@ -263,7 +311,7 @@ abstract class AppDatabase : RoomDatabase() {
                 DATABASE_NAME
             )
                 .openHelperFactory(factory)
-                .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
+                .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18)
                 .addCallback(DatabaseCallback())
                 .build()
         }

@@ -48,4 +48,20 @@ object DatabaseModule {
     fun provideProductDao(
         database: AppDatabase
     ): ProductDao = database.productDao()
+
+    @Provides
+    @Singleton
+    fun provideCustomerDao(database: AppDatabase) = database.customerDao()
+
+    @Provides
+    @Singleton
+    fun providePaymentDao(database: AppDatabase) = database.paymentDao()
+
+    @Provides
+    @Singleton
+    fun provideStockMovementDao(database: AppDatabase) = database.stockMovementDao()
+
+    @Provides
+    @Singleton
+    fun provideDashboardDao(database: AppDatabase) = database.dashboardDao()
 }

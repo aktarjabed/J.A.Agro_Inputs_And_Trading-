@@ -32,6 +32,8 @@ private class TransactionAbortException(val result: com.aktarjabed.inbusiness.do
 class InvoiceRepository @Inject constructor(
     private val database: AppDatabase,
     private val invoiceDao: InvoiceDao,
+    private val paymentDao: com.aktarjabed.inbusiness.data.dao.PaymentDao,
+    private val stockMovementDao: com.aktarjabed.inbusiness.data.dao.StockMovementDao,
     private val productDao: ProductDao,
     private val businessDao: BusinessDao,
     private val calculateInvoiceTotalsUseCase: CalculateInvoiceTotalsUseCase,
@@ -139,6 +141,7 @@ class InvoiceRepository @Inject constructor(
                     ))
                 }
 
+                val invoiceId = UUID.randomUUID().toString()
                 // 3. Stock Deductions for linked products
                 for (item in items) {
                     if (item.productId != null) {
@@ -155,6 +158,34 @@ class InvoiceRepository @Inject constructor(
                                 available = product.availableStock
                             ))
                         }
+
+                        database.stockMovementDao().insertMovement(
+                            com.aktarjabed.inbusiness.data.entities.StockMovement(
+                                businessId = businessId.toLong(),
+                                productId = item.productId,
+                                movementType = "SALE",
+                                quantity = -item.quantity,
+                                stockBefore = product.availableStock,
+                                stockAfter = product.availableStock - item.quantity,
+                                referenceType = "INVOICE",
+                                referenceId = invoiceId,
+                                reason = "Invoice creation"
+                            )
+                        )
+
+                        stockMovementDao.insertMovement(
+                            com.aktarjabed.inbusiness.data.entities.StockMovement(
+                                businessId = businessId.toLong(),
+                                productId = item.productId,
+                                movementType = "SALE",
+                                quantity = -item.quantity,
+                                stockBefore = product.availableStock,
+                                stockAfter = product.availableStock - item.quantity,
+                                referenceType = "INVOICE",
+                                referenceId = invoiceId,
+                                reason = "Invoice creation"
+                            )
+                        )
                     }
                 }
 
@@ -171,7 +202,7 @@ class InvoiceRepository @Inject constructor(
 
                 val nextInvoiceNumber = "INV-${String.format(java.util.Locale.US, "%05d", nextSeqNumber)}"
 
-                val invoiceId = UUID.randomUUID().toString()
+
                 val invoice = Invoice(
                     id = invoiceId,
                     businessId = businessId,
@@ -209,6 +240,19 @@ class InvoiceRepository @Inject constructor(
                 invoiceDao.insertInvoice(invoice)
                 updatedItems.forEach { invoiceDao.insertItem(it) }
 
+                // 5. Initial Payment Insertion
+                if (calcResult.amountPaid > 0.0) {
+                    database.paymentDao().insertPayment(
+                        com.aktarjabed.inbusiness.data.entities.Payment(
+                            businessId = businessId.toLong(),
+                            invoiceId = invoiceId,
+                            amount = calcResult.amountPaid,
+                            paymentMode = paymentMethod,
+                            paymentDate = System.currentTimeMillis()
+                        )
+                    )
+                }
+
                 return@withTransaction InvoiceCreationResult.Success(invoiceId, nextInvoiceNumber)
             }
         } catch (e: TransactionAbortException) {
@@ -239,6 +283,55 @@ class InvoiceRepository @Inject constructor(
             if (e is kotlinx.coroutines.CancellationException) throw e
             Log.e(TAG, "Failed to create invoice", e)
             return@withContext InvoiceCreationResult.UnexpectedFailure(e)
+        }
+    }
+
+    suspend fun cancelInvoice(invoiceId: String): com.aktarjabed.inbusiness.domain.invoice.InvoiceCreationResult = withContext(Dispatchers.IO) {
+        val businessId = businessContext.activeBusinessId.first()
+        try {
+            database.withTransaction {
+                val invoice = invoiceDao.getInvoiceById(invoiceId, businessId)
+                    ?: throw TransactionAbortException(InvoiceCreationResult.InvalidRequest("Invoice not found"))
+
+                if (invoice.status == "CANCELLED") {
+                    throw TransactionAbortException(InvoiceCreationResult.InvalidRequest("Invoice is already cancelled"))
+                }
+
+                // 1. Mark as cancelled
+                invoiceDao.updateInvoice(invoice.copy(status = "CANCELLED"))
+
+                // 2. Reverse stock
+                val items = invoiceDao.getInvoiceItems(invoiceId, businessId)
+                for (item in items) {
+                    if (item.productId != null) {
+                        val product = productDao.getProductById(item.productId, businessId)
+                        if (product != null) {
+                            productDao.addStock(item.productId, businessId, item.quantity)
+
+                            // 3. Create SALE_REVERSAL movement
+                            database.stockMovementDao().insertMovement(
+                                com.aktarjabed.inbusiness.data.entities.StockMovement(
+                                    businessId = businessId.toLong(),
+                                    productId = item.productId,
+                                    movementType = "SALE_REVERSAL",
+                                    quantity = item.quantity,
+                                    stockBefore = product.availableStock,
+                                    stockAfter = product.availableStock + item.quantity,
+                                    referenceType = "INVOICE",
+                                    referenceId = invoiceId,
+                                    reason = "Invoice cancelled"
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+            InvoiceCreationResult.Success(invoiceId, invoiceId)
+        } catch (e: TransactionAbortException) {
+            e.result
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            InvoiceCreationResult.InvalidRequest("Cancellation failed: ${e.message}")
         }
     }
 }

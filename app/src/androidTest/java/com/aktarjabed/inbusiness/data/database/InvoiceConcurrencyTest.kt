@@ -6,6 +6,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.aktarjabed.inbusiness.data.dao.BusinessDao
 import com.aktarjabed.inbusiness.data.dao.InvoiceDao
+import com.aktarjabed.inbusiness.data.dao.PaymentDao
+import com.aktarjabed.inbusiness.data.dao.StockMovementDao
 import com.aktarjabed.inbusiness.data.dao.ProductDao
 import com.aktarjabed.inbusiness.data.entities.BusinessData
 import com.aktarjabed.inbusiness.data.entities.InvoiceItem
@@ -33,6 +35,8 @@ class InvoiceConcurrencyTest {
 
     private lateinit var db: AppDatabase
     private lateinit var invoiceDao: InvoiceDao
+    private lateinit var paymentDao: PaymentDao
+    private lateinit var stockMovementDao: StockMovementDao
     private lateinit var businessDao: BusinessDao
     private lateinit var productDao: ProductDao
 
@@ -52,18 +56,26 @@ class InvoiceConcurrencyTest {
         db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).build()
 
         invoiceDao = db.invoiceDao()
+        paymentDao = db.paymentDao()
+        stockMovementDao = db.stockMovementDao()
         businessDao = db.businessDao()
         productDao = db.productDao()
 
-        mockBusinessContext = mock(BusinessContext::class.java)
-        `when`(mockBusinessContext.activeBusinessId).thenReturn(flowOf(BIZ_ID))
-        `when`(mockBusinessContext.currentUserId).thenReturn(flowOf(USER_ID))
+        mockBusinessContext = BusinessContext(ApplicationProvider.getApplicationContext())
+        runBlocking {
+            mockBusinessContext.setActiveBusinessId(BIZ_ID)
+            mockBusinessContext.setUserId(USER_ID)
+        }
+
+
 
         mockQuotaGate = mock(QuotaGate::class.java)
 
         repository = InvoiceRepository(
             database = db,
             invoiceDao = invoiceDao,
+            paymentDao = paymentDao,
+            stockMovementDao = stockMovementDao,
             productDao = productDao,
             businessDao = businessDao,
             calculateInvoiceTotalsUseCase = calcUseCase,
@@ -232,7 +244,7 @@ class InvoiceConcurrencyTest {
         val realQuotaGate = QuotaGate(db.userQuotaDao(), mock(com.aktarjabed.inbusiness.domain.device.DeviceClassifier::class.java), com.aktarjabed.inbusiness.util.SystemClock(), ApplicationProvider.getApplicationContext())
 
         val realRepo = InvoiceRepository(
-            database = db, invoiceDao = invoiceDao, productDao = productDao, businessDao = businessDao,
+            database = db, invoiceDao = invoiceDao, paymentDao = paymentDao, stockMovementDao = stockMovementDao, productDao = productDao, businessDao = businessDao,
             calculateInvoiceTotalsUseCase = calcUseCase, quotaGate = realQuotaGate, businessContext = mockBusinessContext
         )
 
@@ -278,7 +290,7 @@ class InvoiceConcurrencyTest {
         val realQuotaGate = QuotaGate(db.userQuotaDao(), mock(com.aktarjabed.inbusiness.domain.device.DeviceClassifier::class.java), com.aktarjabed.inbusiness.util.SystemClock(), ApplicationProvider.getApplicationContext())
 
         val realRepo = InvoiceRepository(
-            database = db, invoiceDao = invoiceDao, productDao = productDao, businessDao = businessDao,
+            database = db, invoiceDao = invoiceDao, paymentDao = paymentDao, stockMovementDao = stockMovementDao, productDao = productDao, businessDao = businessDao,
             calculateInvoiceTotalsUseCase = calcUseCase, quotaGate = realQuotaGate, businessContext = mockBusinessContext
         )
 
@@ -319,7 +331,7 @@ class InvoiceConcurrencyTest {
         val realQuotaGate = QuotaGate(db.userQuotaDao(), mock(com.aktarjabed.inbusiness.domain.device.DeviceClassifier::class.java), com.aktarjabed.inbusiness.util.SystemClock(), ApplicationProvider.getApplicationContext())
 
         val realRepo = InvoiceRepository(
-            database = db, invoiceDao = invoiceDao, productDao = productDao, businessDao = businessDao,
+            database = db, invoiceDao = invoiceDao, paymentDao = paymentDao, stockMovementDao = stockMovementDao, productDao = productDao, businessDao = businessDao,
             calculateInvoiceTotalsUseCase = calcUseCase, quotaGate = realQuotaGate, businessContext = mockBusinessContext
         )
 

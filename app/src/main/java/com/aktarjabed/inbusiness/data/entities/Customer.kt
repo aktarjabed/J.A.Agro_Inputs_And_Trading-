@@ -1,31 +1,33 @@
 package com.aktarjabed.inbusiness.data.entities
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
 import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
+import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "customers",
     indices = [
         Index(value = ["businessId", "name"], unique = true)
+    ],
+    foreignKeys = [
+        ForeignKey(
+            entity = BusinessData::class,
+            parentColumns = ["id"],
+            childColumns = ["businessId"],
+            onDelete = ForeignKey.RESTRICT
+        )
     ]
 )
 data class Customer(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     @ColumnInfo(name = "businessId")
-    val businessId: String,
-    @ColumnInfo(name = "name")
+    val businessId: Long,
     val name: String,
-    @ColumnInfo(name = "gstin")
-    val gstin: String = "",
-    @ColumnInfo(name = "address")
     val address: String = "",
-    @ColumnInfo(name = "phone")
+    val gstin: String = "",
     val phone: String = "",
-    @ColumnInfo(name = "email")
-    val email: String = "",
-    @ColumnInfo(name = "createdAt")
-    val createdAt: Long = System.currentTimeMillis()
+    val isActive: Boolean = true
 )

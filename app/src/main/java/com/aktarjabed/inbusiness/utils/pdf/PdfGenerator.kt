@@ -114,7 +114,7 @@ class PdfGenerator(private val context: Context) {
         yPosition = drawPaymentDetails(canvas, invoice, yPosition)
 
         // Terms
-        yPosition = drawTerms(canvas, yPosition)
+        drawTerms(canvas, yPosition)
 
         // Footer
         drawFooter(canvas)
@@ -163,20 +163,27 @@ class PdfGenerator(private val context: Context) {
         var y = startY
 
         // Title
-        canvas.drawText(PdfConstants.INVOICE_TITLE, PAGE_WIDTH / 2f - boldPaint.measureText(PdfConstants.INVOICE_TITLE) / 2, y, boldPaint)
+                // Title uses document type if available
+        val titleText = invoice.documentType.replace("_", " ")
+        canvas.drawText(titleText, PAGE_WIDTH / 2f - boldPaint.measureText(titleText) / 2, y, boldPaint)
         y += 15f
 
         drawDivider(canvas, y)
         y += 20f
 
         // Fixed Business Header (Centered)
-        canvas.drawText(PdfConstants.BUSINESS_NAME, PAGE_WIDTH / 2f - boldPaint.measureText(PdfConstants.BUSINESS_NAME) / 2, y, boldPaint)
+                // Immutable Snapshot Seller Header (Centered)
+        canvas.drawText(invoice.sellerName, PAGE_WIDTH / 2f - boldPaint.measureText(invoice.sellerName) / 2, y, boldPaint)
         y += 20f
         canvas.drawText(PdfConstants.DEALS_IN, PAGE_WIDTH / 2f - textPaint.measureText(PdfConstants.DEALS_IN) / 2, y, textPaint)
         y += 15f
-        canvas.drawText(PdfConstants.BUSINESS_ADDRESS, PAGE_WIDTH / 2f - textPaint.measureText(PdfConstants.BUSINESS_ADDRESS) / 2, y, textPaint)
+        canvas.drawText(invoice.sellerAddress, PAGE_WIDTH / 2f - textPaint.measureText(invoice.sellerAddress) / 2, y, textPaint)
         y += 15f
-        canvas.drawText(PdfConstants.BUSINESS_CONTACT, PAGE_WIDTH / 2f - textPaint.measureText(PdfConstants.BUSINESS_CONTACT) / 2, y, textPaint)
+                val sellerGstinText = if (!invoice.sellerGSTIN.isNullOrBlank()) "GSTIN: ${invoice.sellerGSTIN}" else ""
+        if (sellerGstinText.isNotEmpty()) {
+             canvas.drawText(sellerGstinText, PAGE_WIDTH / 2f - textPaint.measureText(sellerGstinText) / 2, y, textPaint)
+             y += 15f
+        }
         y += 15f
 
         drawDivider(canvas, y)
@@ -367,7 +374,7 @@ class PdfGenerator(private val context: Context) {
 
         val rightMargin = PAGE_WIDTH - MARGIN - 5f
 
-        val amountPaidLabel = "AMOUNT PAID TODAY (Credit):"
+        val amountPaidLabel = "TOTAL AMOUNT PAID:"
         val amountPaidVal = "₹ ${String.format(Locale.US, "%.2f", invoice.amountPaid)}"
         canvas.drawText(amountPaidLabel, MARGIN, y, textPaint)
         canvas.drawText(amountPaidVal, rightMargin - textPaint.measureText(amountPaidVal), y, textPaint)
