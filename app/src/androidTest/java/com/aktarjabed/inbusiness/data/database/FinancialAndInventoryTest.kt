@@ -48,7 +48,7 @@ class FinancialAndInventoryTest {
         // Setup initial invoice
         val invoice = Invoice(
             id = invId,
-            businessId = bizId.toLong(),
+            businessId = bizId,
             totalAmount = 1000.0,
             amountPaid = 0.0,
             balanceDue = 1000.0,
@@ -66,7 +66,7 @@ class FinancialAndInventoryTest {
         paymentDao.insertPayment(payment1)
 
         // Manually update invoice to simulate PaymentUseCases transaction for test
-        val currentTotalPaid = paymentDao.getTotalPaidForInvoice(bizId, invId) ?: 0.0
+        val currentTotalPaid = paymentDao.getTotalPaidForInvoice(bizId.toLong(), invId) ?: 0.0
         invoiceDao.updateInvoice(invoice.copy(amountPaid = currentTotalPaid, balanceDue = invoice.totalAmount - currentTotalPaid))
 
         var updatedInvoice = invoiceDao.getInvoiceById(invId, bizId)
@@ -83,7 +83,7 @@ class FinancialAndInventoryTest {
         )
         paymentDao.insertPayment(payment2)
 
-        val newTotalPaid = paymentDao.getTotalPaidForInvoice(bizId, invId) ?: 0.0
+        val newTotalPaid = paymentDao.getTotalPaidForInvoice(bizId.toLong(), invId) ?: 0.0
         invoiceDao.updateInvoice(invoice.copy(amountPaid = newTotalPaid, balanceDue = invoice.totalAmount - newTotalPaid))
 
         updatedInvoice = invoiceDao.getInvoiceById(invId, bizId)
@@ -100,7 +100,7 @@ class FinancialAndInventoryTest {
         // Initial product
         val product = Product(
             id = productId,
-            businessId = bizId.toLong(),
+            businessId = bizId,
             name = "Test Prod",
             brand = "Brand",
             category = "Cat",
@@ -146,7 +146,7 @@ class FinancialAndInventoryTest {
         val productAfterReversal = productDao.getProductById(productId, bizId)
         assertEquals(50.0, productAfterReversal!!.availableStock, 0.001)
 
-        val movements = stockMovementDao.getMovementsByReference(bizId, "INVOICE", invId)
+        val movements = stockMovementDao.getMovementsByReference(bizId.toLong(), "INVOICE", invId)
         assertEquals(2, movements.size)
         assertEquals("SALE", movements[0].movementType)
         assertEquals("SALE_REVERSAL", movements[1].movementType)
